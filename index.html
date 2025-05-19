@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Table of Contents</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      background-color: white;
+      padding: 2rem 3rem;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
+      color: #222;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      margin: 0.75rem 0;
+    }
+
+    a {
+      display: block;
+      padding: 0.75rem 1rem;
+      background-color: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    a:hover {
+      background-color: #0056b3;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 1.5rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      a {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Table of Contents</h1>
+    <ul id="tocList"></ul>
+  </div>
+
+  <script>
+    const CHAPTER_NAMES = ["Chapter 347", "Chapter 348", "Chapter 349"];
+    const CHAPTER_URLS = [
+      "https://raw.githubusercontent.com/1itchy1/Novel/main/chapter347.txt",
+      "https://raw.githubusercontent.com/1itchy1/Novel/main/chapter348.txt",
+      "https://raw.githubusercontent.com/1itchy1/Novel/main/chapter349.txt"
+    ];
+
+    const tocList = document.getElementById('tocList');
+    CHAPTER_NAMES.forEach((name, index) => {
+      const encodedURL = encodeURIComponent(CHAPTER_URLS[index]);
+      const encodedName = encodeURIComponent(name);
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="reader.html?url=${encodedURL}&name=${encodedName}">${name}</a>`;
+      tocList.appendChild(li);
+    });
+  </script>
+</body>
+</html>
