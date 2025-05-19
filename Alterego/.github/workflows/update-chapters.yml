@@ -2,7 +2,7 @@ name: Update Chapters List
 on:
   push:
     paths:
-      - 'chapter*.txt'
+      - 'Alterego/chapter*.txt'
       
 jobs:
   update-chapters:
@@ -10,26 +10,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         
-      - name: Setup Python (untuk sorting numerik)
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           
       - name: Update chapters.json
         run: |
-          # Dapatkan semua file chapter
+          cd Alterego
+          # Get all chapter files sorted numerically
           FILES=$(ls -v chapter*.txt)
           
-          # Konversi ke array JSON dan simpan
+          # Convert to JSON array and save
           echo $FILES | python -c '
           import sys, json
           files = sys.stdin.read().split()
           print(json.dumps(files, indent=2))
           ' > chapters.json
           
+          # Verify the file was created
+          cat chapters.json
+          
       - name: Commit changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add chapters.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update chapters.json" && git push)
+          git add Alterego/chapters.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update chapters.json [skip ci]" && git push)
