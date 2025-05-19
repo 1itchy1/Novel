@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Novel Reader</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Segoe+UI&family=Merriweather&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-color: #f9f9f9;
+      --text-color: #333;
+      --panel-bg: white;
+      --button-bg: #3498db;
+      --button-hover: #2980b9;
+      --font-size: 16px;
+      --font-family: 'Roboto', sans-serif;
+    }
+    .dark-mode {
+      --bg-color: #1a1a1a;
+      --text-color: #e0e0e0;
+      --panel-bg: #2d2d2d;
+      --button-bg: #5dade2;
+      --button-hover: #7fb3d5;
+    }
+    body {
+      font-family: var(--font-family);
+      font-size: var(--font-size);
+      line-height: 1.8;
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      transition: all 0.3s ease;
+    }
+    .novel-container {
+      background-color: var(--panel-bg);
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+    .novel-content p {
+      margin: 0 0 1.5em 0;
+      text-align: left;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+      color: #666;
+    }
+    .control-btn {
+      background: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    .control-btn:hover {
+      background: var(--button-hover);
+    }
+    .settings-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--button-bg);
+      color: white;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .settings-panel {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      background: var(--panel-bg);
+      color: var(--text-color);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: none;
+    }
+    .settings-panel label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    .chapter-list-panel {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: var(--panel-bg);
+      color: var(--text-color);
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      max-height: 60vh;
+      overflow-y: auto;
+      display: none;
+      width: 300px;
+    }
+    .chapter-item {
+      padding: 8px 15px;
+      cursor: pointer;
+    }
+    .chapter-item:hover,
+    .chapter-item.current {
+      background: var(--button-bg);
+      color: white;
+    }
+    .chapter-title {
+      font-weight: bold;
+      margin-bottom: 1em;
+      color: var(--button-bg);
+      border-bottom: 1px solid var(--button-bg);
+      padding-bottom: 5px;
+    }
+    .progress-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: #ddd;
+      z-index: 50;
+    }
+    .progress {
+      height: 100%;
+      background: var(--button-bg);
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .nav-wrapper {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 100;
+    }
+    .chapter-indicator {
+      font-size: 16px;
+      background: var(--panel-bg);
+      color: var(--text-color);
+      padding: 5px 12px;
+      border-radius: 8px;
+      min-width: 50px;
+      text-align: center;
+    }
+    .chapter-list-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+    }
+    .hidden-ui {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-bar"><div class="progress" id="progressBar"></div></div>
+
+  <div class="novel-container" id="readerContainer">
+    <div class="novel-content" id="novelText">
+      <div class="loading">Loading novel content...</div>
+    </div>
+  </div>
+
+  <div class="nav-wrapper" id="navWrapper">
+    <button class="control-btn" id="prevChapter">◀</button>
+    <div class="chapter-indicator" id="chapterIndicator">1/3</div>
+    <button class="control-btn" id="nextChapter">▶</button>
+  </div>
+
+  <button class="control-btn chapter-list-btn" id="chapterListBtn">≡</button>
+  <div class="settings-btn" id="settingsBtn">⚙</div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <label for="fontSelect">Font:</label>
+    <select id="fontSelect">
+      <option value="Roboto">Roboto</option>
+      <option value="Segoe UI">Segoe UI</option>
+      <option value="Merriweather">Merriweather</option>
+    </select>
+
+    <label for="fontSizeSelect">Font Size:</label>
+    <select id="fontSizeSelect">
+      <option value="14px">Small</option>
+      <option value="16px" selected>Normal</option>
+      <option value="18px">Large</option>
+      <option value="20px">Extra Large</option>
+    </select>
+
+    <label>
+      <input type="checkbox" id="darkModeToggle"> Dark Mode
+    </label>
+  </div>
+
+  <div class="chapter-list-panel" id="chapterListPanel">
+    <h3>Chapter List</h3>
+    <div id="chapterListItems"></div>
+  </div>
+
+  <script>
+    const CHAPTERS = [
+      "https://raw.githubusercontent.com/1itchy1/Novel/main/chapter347.txt",
+      "https://raw.githubusercontent.com/1itchy1/Novel/main/chapter348.txt",
+      "https://raw.githubusercontent.com/1itchy1/Novel/main/chapter349.txt"
+    ];
+    const CHAPTER_NAMES = ["Chapter 347", "Chapter 348", "Chapter 349"];
+    let currentChapter = 0;
+
+    async function loadChapter(index) {
+      try {
+        document.getElementById('novelText').innerHTML = '<div class="loading">Loading...</div>';
+        const response = await fetch(CHAPTERS[index]);
+        if (!response.ok) throw new Error('Failed to load chapter');
+        const text = await response.text();
+        const paragraphs = text.split('\n\n')
+          .filter(p => p.trim())
+          .map((p, i) =>
+            i === 0
+              ? `<div class="chapter-title">${CHAPTER_NAMES[index]}</div><p>${p.trim().replace(/\n/g, ' ')}</p>`
+              : `<p>${p.trim().replace(/\n/g, ' ')}</p>`
+          ).join('');
+        document.getElementById('novelText').innerHTML = paragraphs;
+        currentChapter = index;
+        document.getElementById('chapterIndicator').textContent = `${index + 1}/${CHAPTERS.length}`;
+        localStorage.setItem('lastChapter', currentChapter);
+        updateProgress();
+        updateChapterList();
+      } catch (error) {
+        document.getElementById('novelText').innerHTML = `<p class="error">Error loading chapter: ${error.message}</p>`;
+      }
+    }
+
+    function updateChapterList() {
+      const list = document.getElementById('chapterListItems');
+      list.innerHTML = '';
+      CHAPTER_NAMES.forEach((name, idx) => {
+        const item = document.createElement('div');
+        item.className = `chapter-item ${idx === currentChapter ? 'current' : ''}`;
+        item.textContent = name;
+        item.addEventListener('click', () => {
+          loadChapter(idx);
+          toggleChapterList();
+        });
+        list.appendChild(item);
+      });
+    }
+
+    function updateProgress() {
+      const container = document.querySelector('.novel-container');
+      const progress = (window.scrollY / (container.scrollHeight - window.innerHeight)) * 100;
+      document.getElementById('progressBar').style.width = `${progress}%`;
+    }
+
+    function toggleUIVisibility() {
+      document.getElementById('navWrapper').classList.toggle('hidden-ui');
+      document.getElementById('chapterListBtn').classList.toggle('hidden-ui');
+      document.getElementById('settingsBtn').classList.toggle('hidden-ui');
+      document.getElementById('settingsPanel').style.display = 'none';
+      document.getElementById('chapterListPanel').style.display = 'none';
+    }
+
+    function toggleChapterList() {
+      const panel = document.getElementById('chapterListPanel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function toggleSettingsPanel() {
+      const panel = document.getElementById('settingsPanel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    document.getElementById('prevChapter').addEventListener('click', () => {
+      if (currentChapter > 0) loadChapter(currentChapter - 1);
+    });
+    document.getElementById('nextChapter').addEventListener('click', () => {
+      if (currentChapter < CHAPTERS.length - 1) loadChapter(currentChapter + 1);
+    });
+    document.getElementById('chapterListBtn').addEventListener('click', toggleChapterList);
+    document.getElementById('settingsBtn').addEventListener('click', toggleSettingsPanel);
+    document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+      document.body.classList.toggle('dark-mode', e.target.checked);
+      localStorage.setItem('darkMode', e.target.checked);
+    });
+    document.getElementById('fontSelect').addEventListener('change', (e) => {
+      document.body.style.setProperty('--font-family', `'${e.target.value}', sans-serif`);
+      localStorage.setItem('fontFamily', e.target.value);
+    });
+    document.getElementById('fontSizeSelect').addEventListener('change', (e) => {
+      document.body.style.setProperty('--font-size', e.target.value);
+      localStorage.setItem('fontSize', e.target.value);
+    });
+
+    window.addEventListener('scroll', updateProgress);
+
+    // Toggle UI on click/tap
+    document.body.addEventListener('click', (e) => {
+      // Prevent toggling when clicking on a button or panel
+      if (
+        e.target.closest('#settingsPanel') || 
+        e.target.closest('#chapterListPanel') ||
+        e.target.closest('button') ||
+        e.target.closest('select') ||
+        e.target.closest('label')
+      ) return;
+      toggleUIVisibility();
+    });
+
+    // Load previous settings and chapter
+    const savedChapter = parseInt(localStorage.getItem('lastChapter'), 10);
+    loadChapter(!isNaN(savedChapter) && savedChapter < CHAPTERS.length ? savedChapter : 0);
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkModeToggle').checked = true;
+    }
+    const savedFont = localStorage.getItem('fontFamily');
+    const savedSize = localStorage.getItem('fontSize');
+    if (savedFont) {
+      document.body.style.setProperty('--font-family', `'${savedFont}', sans-serif`);
+      document.getElementById('fontSelect').value = savedFont;
+    }
+    if (savedSize) {
+      document.body.style.setProperty('--font-size', savedSize);
+      document.getElementById('fontSizeSelect').value = savedSize;
+    }
+  </script>
+</body>
+</html>
