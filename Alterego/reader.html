@@ -1,0 +1,522 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>  
+  <title>Novel Reader</title>  
+  <style>  
+    :root {  
+      --bg-color: white;  
+      --text-color: black;  
+      --button-bg: #f0f0f0;  
+      --button-hover: #e0e0e0;  
+      --panel-bg: rgba(255, 255, 255, 0.9);  
+      --panel-border: 1px solid #ddd;  
+      --accent-color: #4CAF50;  
+    }  
+    .dark-mode {  
+      --bg-color: #121212;  
+      --text-color: #e0e0e0;  
+      --button-bg: #333;  
+      --button-hover: #444;  
+      --panel-bg: rgba(30, 30, 30, 0.9);  
+      --panel-border: 1px solid #444;  
+      --accent-color: #2E7D32;  
+    }  
+    body {  
+      font-family: 'Segoe UI', sans-serif;  
+      margin: 0;  
+      padding: 0;  
+      background-color: var(--bg-color);  
+      color: var(--text-color);  
+      transition: background-color 0.3s, color 0.3s;  
+      line-height: 1.6;  
+      padding-bottom: 60px;  
+    }  
+    #content {  
+      max-width: 90%;  
+      margin: 20px auto;  
+      padding: 15px;  
+      text-align: justify;  
+    }  
+    #settingsPanel {  
+      position: fixed;  
+      top: 0;  
+      left: 0;  
+      right: 0;  
+      background-color: var(--panel-bg);  
+      padding: 15px;  
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);  
+      z-index: 1000;  
+      backdrop-filter: blur(5px);  
+      border-bottom: var(--panel-border);  
+      display: none;  
+      max-height: 80vh;  
+      overflow-y: auto;  
+    }  
+    #settingsPanel.show {  
+      display: block;  
+    }  
+    #chapterListPanel {  
+      position: fixed;  
+      bottom: 0;  
+      left: 0;  
+      right: 0;  
+      background-color: var(--panel-bg);  
+      padding: 15px;  
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);  
+      z-index: 1000;  
+      backdrop-filter: blur(5px);  
+      border-top: var(--panel-border);  
+      display: none;  
+      max-height: 60vh;  
+      overflow-y: auto;  
+      transform: translateY(100%);  
+      transition: transform 0.3s ease;  
+    }  
+    #chapterListPanel.show {  
+      display: block;  
+      transform: translateY(0);  
+    }  
+    .settings-row {  
+      display: flex;  
+      flex-wrap: wrap;  
+      gap: 15px;  
+      margin-bottom: 15px;  
+    }  
+    .settings-group {  
+      flex: 1;  
+      min-width: 200px;  
+    }  
+    .settings-group label {  
+      display: block;  
+      margin-bottom: 5px;  
+      font-weight: bold;  
+    }  
+    #chapterList {  
+      display: flex;  
+      flex-direction: column;  
+      gap: 5px;  
+    }  
+    #chapterList button {  
+      text-align: left;  
+      padding: 10px 15px;  
+      border-radius: 5px;  
+      transition: all 0.2s;  
+    }  
+    #controlButtons {  
+      position: fixed;  
+      bottom: 1px;  
+      left: 0;  
+      right: 0;  
+      display: flex;  
+      align-items: center;  
+      justify-content: space-between;  
+      background-color: var(--panel-bg);  
+      padding: 10px;  
+      border-top: var(--panel-border);  
+      z-index: 900;  
+    }  
+    .control-group {  
+      display: flex;  
+      gap: 5px;  
+    }  
+    button {  
+      padding: 8px 15px;  
+      border: none;  
+      border-radius: 5px;  
+      background-color: var(--button-bg);  
+      color: var(--text-color);  
+      cursor: pointer;  
+      font-size: 14px;  
+      transition: background-color 0.2s;  
+    }  
+    button:hover {  
+      background-color: var(--button-hover);  
+    }  
+    button.active {  
+      background-color: var(--accent-color);  
+      color: white;  
+    }  
+    select, input[type="range"] {  
+      width: 100%;  
+      padding: 8px;  
+      border-radius: 4px;  
+      background-color: var(--button-bg);  
+      color: var(--text-color);  
+      border: 1px solid var(--button-hover);  
+    }  
+    input[type="checkbox"] {  
+      margin-right: 8px;  
+    }  
+    .radio-group {  
+      display: flex;  
+      flex-direction: column;  
+      gap: 8px;  
+    }  
+    .radio-option {  
+      display: flex;  
+      align-items: center;  
+    }  
+    .radio-option input {  
+      margin-right: 8px;  
+    }  
+    .chapter-indicator {  
+      flex: 1;  
+      text-align: center;  
+      align-self: center;  
+      font-weight: bold;  
+      font-size: 14px;  
+      pointer-events: none;  
+      color: var(--text-color);  
+    }  
+    #readingProgress {  
+      position: fixed;  
+      bottom: 0;  
+      left: 0;  
+      right: 0;  
+      height: 3px;  
+      background-color: var(--accent-color);  
+      transform-origin: left;  
+      transform: scaleX(0);  
+      transition: transform 0.2s ease;  
+      z-index: 800;  
+    }  
+    @media (max-width: 600px) {  
+      #content {  
+        font-size: 16px;  
+        max-width: 95%;  
+      }  
+      button {  
+        padding: 8px 10px;  
+        font-size: 13px;  
+      }  
+      .settings-group {  
+        min-width: 100%;  
+      }  
+    }  
+  </style>  
+</head>  
+<body>  
+  <div id="settingsPanel">  
+    <h3>Settings</h3>  
+    <div class="settings-row">  
+      <div class="settings-group">  
+        <label for="fontSize">Font Size</label>  
+        <select id="fontSize">  
+          <option value="14">14</option>  
+          <option value="16" selected>16</option>  
+          <option value="18">18</option>  
+          <option value="20">20</option>  
+        </select>  
+      </div>  
+      <div class="settings-group">  
+        <label for="fontStyle">Font Style</label>  
+        <select id="fontStyle">  
+          <option value="'Segoe UI', sans-serif">Segoe UI</option>  
+          <option value="'Roboto', sans-serif">Roboto</option>  
+          <option value="'Merriweather', serif">Merriweather</option>  
+          <option value="'Open Sans', sans-serif">Open Sans</option>  
+          <option value="'Times New Roman', serif">Times New Roman</option>  
+        </select>  
+      </div>  
+    </div>  
+    <div class="settings-row">  
+      <div class="settings-group">  
+        <label for="lineHeight">Line Height</label>  
+        <select id="lineHeight">  
+          <option value="1.4">1.4</option>  
+          <option value="1.6">1.6</option>  
+          <option value="1.8">1.8</option>  
+          <option value="2.0">2.0</option>  
+        </select>  
+      </div>  
+      <div class="settings-group">  
+        <label for="contentMargin">Margin</label>  
+        <select id="contentMargin">  
+          <option value="5">5</option>  
+          <option value="15" selected>15</option>  
+          <option value="25">25</option>  
+        </select>  
+      </div>  
+    </div>  
+    <div class="settings-row">  
+      <div class="settings-group">  
+        <label>Theme</label>  
+        <div class="radio-group">  
+          <div class="radio-option">  
+            <input type="radio" id="lightTheme" name="theme" value="light" checked>  
+            <label for="lightTheme">Light Mode</label>  
+          </div>  
+          <div class="radio-option">  
+            <input type="radio" id="darkTheme" name="theme" value="dark">  
+            <label for="darkTheme">Dark Mode</label>  
+          </div>  
+        </div>  
+      </div>  
+      <div class="settings-group">  
+        <label>Text Alignment</label>  
+        <div class="radio-group">  
+          <div class="radio-option">  
+            <input type="radio" id="justifyText" name="alignment" value="justify">  
+            <label for="justifyText">Justify</label>  
+          </div>  
+          <div class="radio-option">  
+            <input type="radio" id="leftAlign" name="alignment" value="left" checked>  
+            <label for="leftAlign">Left Align</label>  
+          </div>  
+        </div>  
+      </div>  
+    </div>  
+    <div class="settings-row">  
+      <button id="closeSettingsBtn" style="margin-top: 10px;">Close Settings</button>  
+    </div>  
+  </div>  
+    
+  <div id="chapterListPanel">  
+    <h3>Chapters</h3>  
+    <div id="chapterList"></div>  
+    <button id="closeChaptersBtn" style="margin-top: 10px;">Close Chapters</button>  
+  </div>  
+    
+  <div id="content">Loading...</div>  
+  <div id="readingProgress"></div>  
+    
+  <div id="controlButtons">  
+    <div class="control-group">  
+      <button id="settingsBtn" title="Settings">⚙️</button>  
+      <button id="chaptersBtn" title="Chapters">📚</button>  
+    </div>  
+    <div id="chapterIndicator" class="chapter-indicator">Chapter </div>  
+    <div class="control-group">  
+      <button id="prevBtn" title="Previous">◀️</button>  
+      <button id="nextBtn" title="Next">▶️</button>  
+    </div>  
+  </div>  
+    
+  <script>  
+    let controlsVisible = true;  
+  
+    document.body.addEventListener("click", function (e) {  
+      if (e.target.closest("#controlButtons")) return;  
+      controlsVisible = !controlsVisible;  
+      const panel = document.getElementById("controlButtons");  
+      panel.style.display = controlsVisible ? "flex" : "none";  
+    });  
+    
+    const baseRaw = 'https://raw.githubusercontent.com/1itchy1/Novel/main/';  
+    const chaptersUrl = baseRaw + 'chapters.json';  
+    const contentEl = document.getElementById('content');  
+    const chapterListEl = document.getElementById('chapterList');  
+    let chapters = [];  
+    let currentIndex = 0;  
+  
+    async function initReader() {  
+      await fetchChapters();  
+      const urlParams = new URLSearchParams(window.location.search);  
+      const chapterName = urlParams.get('chapter');  
+      if (chapterName) {  
+        currentIndex = chapters.findIndex(ch => ch.replace('.txt', '') === chapterName);  
+        if (currentIndex === -1) currentIndex = 0;  
+      }  
+      loadChapter(currentIndex);  
+      updateProgressBar();  
+      window.addEventListener('scroll', updateProgressBar);  
+    }  
+  
+    async function fetchChapters() {  
+      try {  
+        const res = await fetch(chaptersUrl + '?v=' + Date.now());  
+        chapters = await res.json();  
+        renderChapterList();  
+      } catch (err) {  
+        contentEl.textContent = 'Failed to load chapters. Refresh to try again.';  
+        console.error(err);  
+      }  
+    }  
+  
+    function updateProgressBar() {  
+      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;  
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;  
+      const scrollProgress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;  
+      document.getElementById('readingProgress').style.transform = `scaleX(${scrollProgress})`;  
+    }  
+  
+    function renderChapterList() {  
+      chapterListEl.innerHTML = '';  
+      chapters.forEach((chapter, i) => {  
+        const btn = document.createElement('button');  
+        btn.textContent = chapter.replace('.txt', '');  
+        if (i === currentIndex) btn.classList.add('active');  
+        btn.onclick = () => {  
+          currentIndex = i;  
+          loadChapter(i);  
+          togglePanel('chapters');  
+          window.scrollTo(0, 0);  
+          history.pushState({}, '', `?chapter=${encodeURIComponent(chapter.replace('.txt', ''))}`);  
+        };  
+        chapterListEl.appendChild(btn);  
+      });  
+    }  
+  
+    async function loadChapter(index) {  
+      try {  
+        contentEl.textContent = 'Loading...';  
+        const res = await fetch(baseRaw + chapters[index]);  
+        const text = await res.text();  
+        const paragraphs = text  
+          .split(/\n\s*\n/)  
+          .map(p => p.trim())  
+          .filter(p => p.length > 0)  
+          .map(p => `<p>${p}</p>`)  
+          .join('');  
+        contentEl.innerHTML = paragraphs;  
+        updateActiveChapter(index);  
+        updateChapterIndicator(index);  
+      } catch (err) {  
+        contentEl.textContent = 'Failed to load chapter.';  
+        console.error(err);  
+      }  
+    }  
+  
+    function updateActiveChapter(index) {  
+      const buttons = chapterListEl.querySelectorAll('button');  
+      buttons.forEach((btn, i) => {  
+        btn.classList.toggle('active', i === index);  
+      });  
+    }  
+  
+    function updateChapterIndicator(index) {  
+      const indicator = document.getElementById('chapterIndicator');  
+      if (chapters.length > 0 && chapters[index]) {  
+        const rawName = chapters[index].replace('.txt', '');  
+        const match = rawName.match(/chapter(\d+)/i);  
+        indicator.textContent = match ? `Chapter ${match[1]}` : rawName;  
+      } else {  
+        indicator.textContent = '';  
+      }  
+    }  
+  
+    document.getElementById('nextBtn').onclick = () => {  
+      if (currentIndex < chapters.length - 1) {  
+        currentIndex++;  
+        loadChapter(currentIndex);  
+        window.scrollTo(0, 0);  
+        history.pushState({}, '', `?chapter=${encodeURIComponent(chapters[currentIndex].replace('.txt', ''))}`);  
+      }  
+    };  
+  
+    document.getElementById('prevBtn').onclick = () => {  
+      if (currentIndex > 0) {  
+        currentIndex--;  
+        loadChapter(currentIndex);  
+        window.scrollTo(0, 0);  
+        history.pushState({}, '', `?chapter=${encodeURIComponent(chapters[currentIndex].replace('.txt', ''))}`);  
+      }  
+    };  
+  
+    function togglePanel(type) {  
+      const settingsPanel = document.getElementById('settingsPanel');  
+      const chapterListPanel = document.getElementById('chapterListPanel');  
+      
+      if (type === 'settings') {  
+        settingsPanel.classList.toggle('show');  
+        if (chapterListPanel.classList.contains('show')) {  
+          chapterListPanel.classList.remove('show');  
+        }  
+      } else {  
+        chapterListPanel.classList.toggle('show');  
+        if (settingsPanel.classList.contains('show')) {  
+          settingsPanel.classList.remove('show');  
+        }  
+      }  
+    }  
+  
+    document.getElementById('settingsBtn').onclick = () => togglePanel('settings');  
+    document.getElementById('chaptersBtn').onclick = () => togglePanel('chapters');  
+    document.getElementById('closeSettingsBtn').onclick = () => togglePanel('settings');  
+    document.getElementById('closeChaptersBtn').onclick = () => togglePanel('chapters');  
+  
+    // Settings controls  
+    document.getElementById('fontSize').onchange = (e) => {  
+      contentEl.style.fontSize = e.target.value + 'px';  
+      localStorage.setItem('fontSize', e.target.value);  
+    };  
+  
+    document.getElementById('fontStyle').onchange = (e) => {  
+      contentEl.style.fontFamily = e.target.value;  
+      localStorage.setItem('fontStyle', e.target.value);  
+    };  
+  
+    document.getElementById('lineHeight').onchange = (e) => {  
+      contentEl.style.lineHeight = e.target.value;  
+      localStorage.setItem('lineHeight', e.target.value);  
+    };  
+  
+    document.getElementById('contentMargin').onchange = (e) => {  
+      contentEl.style.padding = e.target.value + 'px';  
+      localStorage.setItem('contentMargin', e.target.value);  
+    };  
+  
+    document.querySelectorAll('input[name="theme"]').forEach(radio => {  
+      radio.onchange = (e) => {  
+        const isDark = e.target.value === 'dark';  
+        document.body.classList.toggle('dark-mode', isDark);  
+        localStorage.setItem('darkMode', isDark);  
+      };  
+    });  
+  
+    document.querySelectorAll('input[name="alignment"]').forEach(radio => {  
+      radio.onchange = (e) => {  
+        contentEl.style.textAlign = e.target.value;  
+        localStorage.setItem('justifyText', e.target.value === 'justify');  
+      };  
+    });  
+  
+    function loadPreferences() {  
+      // Theme  
+      const darkMode = localStorage.getItem('darkMode') === 'true';  
+      document.body.classList.toggle('dark-mode', darkMode);  
+      document.getElementById(darkMode ? 'darkTheme' : 'lightTheme').checked = true;  
+      
+      // Font Size  
+      if (localStorage.getItem('fontSize')) {  
+        const size = localStorage.getItem('fontSize');  
+        document.getElementById('fontSize').value = size;  
+        contentEl.style.fontSize = size + 'px';  
+      }  
+      
+      // Font Style  
+      if (localStorage.getItem('fontStyle')) {  
+        const style = localStorage.getItem('fontStyle');  
+        document.getElementById('fontStyle').value = style;  
+        contentEl.style.fontFamily = style;  
+      }  
+      
+      // Line Height  
+      if (localStorage.getItem('lineHeight')) {  
+        const lh = localStorage.getItem('lineHeight');  
+        document.getElementById('lineHeight').value = lh;  
+        contentEl.style.lineHeight = lh;  
+      }  
+      
+      // Margin  
+      if (localStorage.getItem('contentMargin')) {  
+        const margin = localStorage.getItem('contentMargin');  
+        document.getElementById('contentMargin').value = margin;  
+        contentEl.style.padding = margin + 'px';  
+      }  
+      
+      // Text Alignment  
+      const justify = localStorage.getItem('justifyText') !== 'false';  
+      contentEl.style.textAlign = justify ? 'justify' : 'left';  
+      document.getElementById(justify ? 'justifyText' : 'leftAlign').checked = true;  
+    }  
+  
+    window.onload = () => {  
+      loadPreferences();  
+      initReader();  
+    };  
+  </script>  
+</body>  
+</html>
