@@ -1,0 +1,35 @@
+name: Update Chapters List
+on:
+  push:
+    paths:
+      - 'chapter*.txt'
+      
+jobs:
+  update-chapters:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Setup Python (untuk sorting numerik)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Update chapters.json
+        run: |
+          # Dapatkan semua file chapter
+          FILES=$(ls -v chapter*.txt)
+          
+          # Konversi ke array JSON dan simpan
+          echo $FILES | python -c '
+          import sys, json
+          files = sys.stdin.read().split()
+          print(json.dumps(files, indent=2))
+          ' > chapters.json
+          
+      - name: Commit changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add chapters.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update chapters.json" && git push)
