@@ -1,8 +1,8 @@
 [
-  "chapter347.txt",
-  "chapter348.txt",
-  "chapter349.txt",
-  "chapter350.txt",
-  "chapter351.txt",
-  "chapter352.txt"
+  { "name": "chapter347", "date": "2025-06-20" },
+  { "name": "chapter348", "date": "2025-06-20" },
+  { "name": "chapter349", "date": "2025-06-20" },
+  { "name": "chapter350", "date": "2025-06-20" },
+  { "name": "chapter351", "date": "2025-06-21" },
+  { "name": "chapter352", "date": "2025-06-21" }
 ]
